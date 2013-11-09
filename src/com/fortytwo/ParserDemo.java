@@ -26,8 +26,9 @@ class ParserDemo {
     public static void main(String[] args) {
         Iterable<List<? extends HasWord>> sentences;
 
-        LexicalizedParser lp = LexicalizedParser.loadModel("models/SerializedModel1");
+        LexicalizedParser lp = LexicalizedParser.loadModel("models/SerializedModel4");
         DocumentPreprocessor dp = new DocumentPreprocessor("data/SampleSet1_POS.txt");
+//        DocumentPreprocessor dp = new DocumentPreprocessor("data/Sample1Tweet.txt");
         TokenizerFactory<CoreLabel> tf = WhitespaceTokenizer.newCoreLabelTokenizerFactory("");
 
         dp.setSentenceDelimiter("\n");
@@ -135,11 +136,45 @@ class ParserDemo {
 //        tp.printTree(parse);
     }
 
+    private static boolean isTagInTree(String tag, Tree treeToCheck)
+    {
+        return treeToCheck.toString().matches(".*\\b"+tag+"\\b.*");
+    }
+
+    private static Tree getDescriptiveSubtree(Tree completeTree, Tree matchedNode)
+    {
+        if (matchedNode == null || matchedNode.parent(completeTree) == null) return completeTree;
+        List<Tree> siblings = matchedNode.parent(completeTree).siblings(completeTree);
+        if (siblings == null || siblings.size() == 0)  // No siblings
+        {
+            return getDescriptiveSubtree(completeTree, matchedNode.parent(completeTree));
+        }
+        else
+        {
+            for (Tree sibling : siblings)
+            {
+                if (sibling.value().equals("PP") && !(isTagInTree("JJ", sibling) || isTagInTree("VB", sibling) || isTagInTree("VBZ", sibling)))
+                {
+                    return getDescriptiveSubtree(completeTree, matchedNode.parent(completeTree));
+                    //break;
+                }
+                if (sibling.value().equals("IN"))
+                {
+                    return getDescriptiveSubtree(completeTree, matchedNode.parent(completeTree));
+                    //break;
+                }
+                return sibling;
+            }
+        }
+
+        return completeTree;
+    }
+
     private static void printDescribingPhrase(List <? extends HasWord> sentence, String query, Tree parse) {
 
         // Check if the current sentence contains "iPad Air" in it
+        parse.pennPrint();
         System.out.print(Sentence.listToString(sentence) + "\t|-|\t");
-
         if (!Sentence.listToString(sentence).toLowerCase().matches(".*" + query.toLowerCase() + ".*")) {
             return;
         }
@@ -149,6 +184,9 @@ class ParserDemo {
         Iterator treeIterator = parse.iterator();
         Tree currentTree;
 
+        String[] words= query.split(" ");
+        String lastWord = words[words.length-1].toLowerCase();
+
         while (treeIterator.hasNext()) {
 
             currentTree = (Tree) treeIterator.next();
@@ -157,19 +195,20 @@ class ParserDemo {
                 continue;
             }
 
-            if (currentTree.yieldWords().get(0).toString().toLowerCase().equals(query.split(" ")[0].toLowerCase())) {
+            if (currentTree.yieldWords().get(0).toString().toLowerCase().matches(".*\\b"+lastWord+"\\b.*")) {
 
-                Tree descriptionTree = currentTree.parent(parse).siblings(parse).get(0);
-                if (descriptionTree != null && !descriptionTree.value().equals("VB")) { // TODO VB is wrong, there are more cases
-                    List<Tree> subTrees = currentTree.parent(parse).parent(parse).siblings(parse);
-                    for (Tree subTree : subTrees) {
-                        if (subTree.value().equals("PP")) {
-                            descriptionTree = subTree;
-                            break;
-                        }
-                    }
-                }
 
+//                Tree descriptionTree = currentTree.parent(parse).siblings(parse).get(0);
+//                if (descriptionTree != null && !descriptionTree.value().equals("VB")) { // TODO VB is wrong, there are more cases
+//                    List<Tree> subTrees = currentTree.parent(parse).parent(parse).siblings(parse);
+//                    for (Tree subTree : subTrees) {
+//                        if (subTree.value().equals("PP")) {
+//                            descriptionTree = subTree;
+//                            break;
+//                        }
+//                    }
+//                }
+                Tree descriptionTree = getDescriptiveSubtree(parse, currentTree);
                 if (descriptionTree != null) {
                     // Print out the words in the tree (should be the phrase describing the iPad)
                     for (Word word : descriptionTree.yieldWords()) {
