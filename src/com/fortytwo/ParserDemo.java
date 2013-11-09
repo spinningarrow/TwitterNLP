@@ -24,46 +24,30 @@ class ParserDemo {
      * include in the classpath for ParserDemo to work.
      */
     public static void main(String[] args) {
-//        LexicalizedParser lp = LexicalizedParser.loadModel("edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz");
         LexicalizedParser lp = LexicalizedParser.loadModel("models/SerializedModel1");
-//        lp.setOptionFlags(new String[]{
-//                /*"-tokenized",*/
-//                "-tagSeparator", "_",
-//                "-tokenizerFactory", "edu.stanford.nlp.process.WhitespaceTokenizer",
-//                "-tokenizerMethod", "newCoreLabelTokenizerFactory"
-//        });
 
         Iterable<List<? extends HasWord>> sentences;
 
         DocumentPreprocessor dp = new DocumentPreprocessor("data/SampleSet1_POS.txt");
-//        TokenizerFactory<CoreLabel> ptbTokenizerFactory = PTBTokenizer.factory(new CoreLabelTokenFactory(), "");
 
         dp.setSentenceDelimiter("\n");
-
         dp.setTagDelimiter("_");
 
         TokenizerFactory<CoreLabel> tf = WhitespaceTokenizer.newCoreLabelTokenizerFactory("");
         dp.setTokenizerFactory(tf);
 
-        List<List<? extends HasWord>> tmp =
-                new ArrayList<List<? extends HasWord>>();
+        List<List<? extends HasWord>> tmp = new ArrayList<List<? extends HasWord>>();
+
         for (List<HasWord> sentence : dp) {
             tmp.add(sentence);
         }
+
         sentences = tmp;
 
         for (List<? extends HasWord> sentence : sentences) {
             Tree parse = lp.parse(sentence);
-//            parse.pennPrint();
             printDescribingPhrase(sentence, "ipad", parse);
         }
-
-
-//        if (args.length > 0) {
-//            demoDP(lp, args[0]);
-//        } else {
-//            demoAPI(lp);
-//        }
     }
 
     /**
