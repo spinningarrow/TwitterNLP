@@ -84,23 +84,35 @@ class ParserDemo {
         System.out.println();
 
         // Check if the current sentence contains "iPad Air" in it
+        // TODO there should be a better way to do this, but regexes in Java are a pain
         ArrayList<Word> words = parse.yieldWords();
-        if (words.indexOf(new Word("iPad")) != -1 && words.indexOf(new Word("Air")) != -1) {
-            Iterator treeIterator = parse.iterator();
-            Tree currentTree;
-            while (treeIterator.hasNext()) {
-                currentTree = (Tree) treeIterator.next();
-                if (currentTree.yieldWords().get(0).toString().equals("iPad")) {
-                    Tree description = currentTree.parent(parse).siblings(parse).get(0);
-                    if (description != null) {
-                        for (Word word : description.yieldWords()) {
-                            System.out.print(word + " ");
-                        }
-                        System.out.println();
-                    }
+        if (words.indexOf(new Word("iPad")) == -1 || words.indexOf(new Word("Air")) == -1) {
+            return;
+        }
 
-                    break;
+        // Loop through the parse tree till you get to the node containing the word iPad
+        // (there are two nodes, one containing the label and the word, and one containing just the word)
+        Iterator treeIterator = parse.iterator();
+        Tree currentTree;
+
+        while (treeIterator.hasNext()) {
+
+            currentTree = (Tree) treeIterator.next();
+
+            if (currentTree.yieldWords().get(0).toString().equals("iPad")) {
+
+                Tree descriptionTree = currentTree.parent(parse).siblings(parse).get(0);
+
+                if (descriptionTree != null) {
+                    // Print out the words in the tree (should be the phrase describing the iPad)
+                    for (Word word : descriptionTree.yieldWords()) {
+                        System.out.print(word + " ");
+                    }
+                    System.out.println();
                 }
+
+                // Don't continue iteration, we already found the iPad Air
+                break;
             }
         }
 
