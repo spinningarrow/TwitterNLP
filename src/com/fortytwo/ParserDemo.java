@@ -76,6 +76,7 @@ class ParserDemo {
 //        String sentence = "iPad Air you skinny bitch!!";
 //        String sentence = "I want the iPad Air";
         String sentence = "I LOVE the iPad Air ad.";
+        String query = "iPad Air";
 
         String sent[] = sentence.split(" ");
         List<CoreLabel> rawWords = Sentence.toCoreLabelList(sent);
@@ -84,9 +85,7 @@ class ParserDemo {
         System.out.println();
 
         // Check if the current sentence contains "iPad Air" in it
-        // TODO there should be a better way to do this, but regexes in Java are a pain
-        ArrayList<Word> words = parse.yieldWords();
-        if (words.indexOf(new Word("iPad")) == -1 || words.indexOf(new Word("Air")) == -1) {
+        if (!sentence.toLowerCase().matches(".*" + query.toLowerCase() + ".*")) {
             return;
         }
 
@@ -99,7 +98,7 @@ class ParserDemo {
 
             currentTree = (Tree) treeIterator.next();
 
-            if (currentTree.yieldWords().get(0).toString().equals("iPad")) {
+            if (currentTree.yieldWords().get(0).toString().toLowerCase().equals(query.split(" ")[0].toLowerCase())) {
 
                 Tree descriptionTree = currentTree.parent(parse).siblings(parse).get(0);
 
