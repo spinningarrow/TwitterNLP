@@ -1,8 +1,12 @@
+package com.fortytwo;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.io.StringReader;
 
+import edu.stanford.nlp.ling.Word;
 import edu.stanford.nlp.process.TokenizerFactory;
 import edu.stanford.nlp.process.CoreLabelTokenFactory;
 import edu.stanford.nlp.process.DocumentPreprocessor;
@@ -67,29 +71,53 @@ class ParserDemo {
      */
     public static void demoAPI(LexicalizedParser lp) {
         // This option shows parsing a list of correctly tokenized words
-        String[] sent = {"This", "is", "an", "easy", "sentence", "."};
+//        String[] sent = {"This", "is", "an", "easy", "sentence", "."};
+        String sentence = "The iPad Air is lovely, light and awesome";
+        String sent[] = sentence.split(" ");
         List<CoreLabel> rawWords = Sentence.toCoreLabelList(sent);
         Tree parse = lp.apply(rawWords);
-        parse.pennPrint();
+//        parse.pennPrint();
         System.out.println();
+
+        // Check if the current sentence contains "iPad Air" in it
+        ArrayList<Word> words = parse.yieldWords();
+        if (words.indexOf(new Word("iPad")) != -1 && words.indexOf(new Word("Air")) != -1) {
+            Iterator treeIterator = parse.iterator();
+            Tree currentTree;
+            while (treeIterator.hasNext()) {
+                currentTree = (Tree) treeIterator.next();
+                if (currentTree.yieldWords().get(0).toString().equals("iPad")) {
+                    Tree description = currentTree.parent(parse).siblings(parse).get(0);
+                    if (description != null) {
+                        for (Word word : description.yieldWords()) {
+                            System.out.print(word + " ");
+                        }
+                        System.out.println();
+                    }
+
+                    break;
+                }
+            }
+        }
+
 
         // This option shows loading and using an explicit tokenizer
-        String sent2 = "This is another sentence.";
-        TokenizerFactory<CoreLabel> tokenizerFactory =
-                PTBTokenizer.factory(new CoreLabelTokenFactory(), "");
-        List<CoreLabel> rawWords2 =
-                tokenizerFactory.getTokenizer(new StringReader(sent2)).tokenize();
-        parse = lp.apply(rawWords2);
-
-        TreebankLanguagePack tlp = new PennTreebankLanguagePack();
-        GrammaticalStructureFactory gsf = tlp.grammaticalStructureFactory();
-        GrammaticalStructure gs = gsf.newGrammaticalStructure(parse);
-        List<TypedDependency> tdl = gs.typedDependenciesCCprocessed();
-        System.out.println(tdl);
-        System.out.println();
-
-        TreePrint tp = new TreePrint("penn,typedDependenciesCollapsed");
-        tp.printTree(parse);
+//        String sent2 = "This is another sentence.";
+//        TokenizerFactory<CoreLabel> tokenizerFactory =
+//                PTBTokenizer.factory(new CoreLabelTokenFactory(), "");
+//        List<CoreLabel> rawWords2 =
+//                tokenizerFactory.getTokenizer(new StringReader(sent2)).tokenize();
+//        parse = lp.apply(rawWords2);
+//
+//        TreebankLanguagePack tlp = new PennTreebankLanguagePack();
+//        GrammaticalStructureFactory gsf = tlp.grammaticalStructureFactory();
+//        GrammaticalStructure gs = gsf.newGrammaticalStructure(parse);
+//        List<TypedDependency> tdl = gs.typedDependenciesCCprocessed();
+//        System.out.println(tdl);
+//        System.out.println();
+//
+//        TreePrint tp = new TreePrint("penn,typedDependenciesCollapsed");
+//        tp.printTree(parse);
     }
 
     private ParserDemo() {
