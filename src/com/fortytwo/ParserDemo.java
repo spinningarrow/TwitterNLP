@@ -74,8 +74,10 @@ class ParserDemo {
 //        String[] sent = {"This", "is", "an", "easy", "sentence", "."};
 //        String sentence = "The iPad Air is lovely, light and awesome";
 //        String sentence = "iPad Air you skinny bitch!!";
-        String sentence = "I want the iPad Air";
+//        String sentence = "I want the iPad Air";
 //        String sentence = "I LOVE the iPad Air ad.";
+//        String sentence = "I'm in love with the iPad Air, I'm just saying.";
+        String sentence = "iPad air is the stupidest name I've heard";
         String query = "iPad Air";
 
         String sent[] = sentence.split(" ");
@@ -98,9 +100,22 @@ class ParserDemo {
 
             currentTree = (Tree) treeIterator.next();
 
+            if (currentTree.depth() != 1) {
+                continue;
+            }
+
             if (currentTree.yieldWords().get(0).toString().toLowerCase().equals(query.split(" ")[0].toLowerCase())) {
 
                 Tree descriptionTree = currentTree.parent(parse).siblings(parse).get(0);
+                if (descriptionTree != null && !descriptionTree.value().equals("VB")) { // TODO VB is wrong, there are more cases
+                    List<Tree> subTrees = currentTree.parent(parse).parent(parse).siblings(parse);
+                    for (Tree subTree : subTrees) {
+                        if (subTree.value().equals("PP")) {
+                            descriptionTree = subTree;
+                            break;
+                        }
+                    }
+                }
 
                 if (descriptionTree != null) {
                     // Print out the words in the tree (should be the phrase describing the iPad)
