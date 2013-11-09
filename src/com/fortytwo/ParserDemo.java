@@ -138,7 +138,7 @@ class ParserDemo {
     private static void printDescribingPhrase(List <? extends HasWord> sentence, String query, Tree parse) {
 
         // Check if the current sentence contains "iPad Air" in it
-        System.out.println(Sentence.listToString(sentence));
+        System.out.print(Sentence.listToString(sentence) + "\t|-|\t");
 
         if (!Sentence.listToString(sentence).toLowerCase().matches(".*" + query.toLowerCase() + ".*")) {
             return;
