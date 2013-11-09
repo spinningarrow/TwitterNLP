@@ -49,7 +49,6 @@ class ParserDemo {
             printDescribingPhrase(sentence, "ipad", parse);
         }
     }
-
     /**
      * demoDP demonstrates turning a file into tokens and then parse
      * trees.  Note that the trees are printed by calling pennPrint on
@@ -141,7 +140,9 @@ class ParserDemo {
     private static void printDescribingPhrase(List <? extends HasWord> sentence, String query, Tree parse) {
 
         // Check if the current sentence contains "iPad Air" in it
-        if (!sentence.toString().toLowerCase().matches(".*" + query.toLowerCase() + ".*")) {
+        System.out.println(Sentence.listToString(sentence));
+
+        if (!Sentence.listToString(sentence).toLowerCase().matches(".*" + query.toLowerCase() + ".*")) {
             return;
         }
 
