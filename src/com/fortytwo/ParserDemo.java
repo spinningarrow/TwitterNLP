@@ -24,16 +24,14 @@ class ParserDemo {
      * include in the classpath for ParserDemo to work.
      */
     public static void main(String[] args) {
-        LexicalizedParser lp = LexicalizedParser.loadModel("models/SerializedModel1");
-
         Iterable<List<? extends HasWord>> sentences;
 
+        LexicalizedParser lp = LexicalizedParser.loadModel("models/SerializedModel1");
         DocumentPreprocessor dp = new DocumentPreprocessor("data/SampleSet1_POS.txt");
+        TokenizerFactory<CoreLabel> tf = WhitespaceTokenizer.newCoreLabelTokenizerFactory("");
 
         dp.setSentenceDelimiter("\n");
         dp.setTagDelimiter("_");
-
-        TokenizerFactory<CoreLabel> tf = WhitespaceTokenizer.newCoreLabelTokenizerFactory("");
         dp.setTokenizerFactory(tf);
 
         List<List<? extends HasWord>> tmp = new ArrayList<List<? extends HasWord>>();
@@ -43,10 +41,11 @@ class ParserDemo {
         }
 
         sentences = tmp;
+        String query = "iPad Air";
 
         for (List<? extends HasWord> sentence : sentences) {
             Tree parse = lp.parse(sentence);
-            printDescribingPhrase(sentence, "ipad", parse);
+            printDescribingPhrase(sentence, query, parse);
         }
     }
     /**
@@ -85,7 +84,6 @@ class ParserDemo {
      */
     public static void demoAPI(LexicalizedParser lp) {
         // This option shows parsing a list of correctly tokenized words
-        String query = "iPad Air";
         ArrayList<String> sentences = new ArrayList<String>();
 
 //        String sentence = "iPad Air you skinny bitch!!";
