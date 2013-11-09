@@ -1,3 +1,4 @@
+package com.fortytwo;
 
 import java.io.IOException;
 import java.io.StringReader;

@@ -7,10 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import edu.stanford.nlp.ling.Word;
-import edu.stanford.nlp.process.TokenizerFactory;
-import edu.stanford.nlp.process.CoreLabelTokenFactory;
-import edu.stanford.nlp.process.DocumentPreprocessor;
-import edu.stanford.nlp.process.PTBTokenizer;
+import edu.stanford.nlp.process.*;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.ling.HasWord;
 import edu.stanford.nlp.ling.Sentence;
@@ -27,12 +24,46 @@ class ParserDemo {
      * include in the classpath for ParserDemo to work.
      */
     public static void main(String[] args) {
-        LexicalizedParser lp = LexicalizedParser.loadModel("edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz");
-        if (args.length > 0) {
-            demoDP(lp, args[0]);
-        } else {
-            demoAPI(lp);
+//        LexicalizedParser lp = LexicalizedParser.loadModel("edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz");
+        LexicalizedParser lp = LexicalizedParser.loadModel("models/SerializedModel1");
+//        lp.setOptionFlags(new String[]{
+//                /*"-tokenized",*/
+//                "-tagSeparator", "_",
+//                "-tokenizerFactory", "edu.stanford.nlp.process.WhitespaceTokenizer",
+//                "-tokenizerMethod", "newCoreLabelTokenizerFactory"
+//        });
+
+        Iterable<List<? extends HasWord>> sentences;
+
+        DocumentPreprocessor dp = new DocumentPreprocessor("data/SampleSet1_POS.txt");
+//        TokenizerFactory<CoreLabel> ptbTokenizerFactory = PTBTokenizer.factory(new CoreLabelTokenFactory(), "");
+
+        dp.setSentenceDelimiter("\n");
+
+        dp.setTagDelimiter("_");
+
+        TokenizerFactory<CoreLabel> tf = WhitespaceTokenizer.newCoreLabelTokenizerFactory("");
+        dp.setTokenizerFactory(tf);
+
+        List<List<? extends HasWord>> tmp =
+                new ArrayList<List<? extends HasWord>>();
+        for (List<HasWord> sentence : dp) {
+            tmp.add(sentence);
         }
+        sentences = tmp;
+
+        for (List<? extends HasWord> sentence : sentences) {
+            Tree parse = lp.parse(sentence);
+//            parse.pennPrint();
+            printDescribingPhrase(sentence, "ipad", parse);
+        }
+
+
+//        if (args.length > 0) {
+//            demoDP(lp, args[0]);
+//        } else {
+//            demoAPI(lp);
+//        }
     }
 
     /**
@@ -95,13 +126,13 @@ class ParserDemo {
 //            "iPad air is the stupidest name I've heard"
 //        };
 
-        for (String sentence : sentences) {
-            String sent[] = sentence.split(" ");
-            List<CoreLabel> rawWords = Sentence.toCoreLabelList(sent);
-            Tree parse = lp.apply(rawWords);
-            System.out.print(sentence + "|-|");
-            printDescribingPhrase(sentence, query, parse);
-        }
+//        for (String sentence : sentences) {
+//            String sent[] = sentence.split(" ");
+//            List<CoreLabel> rawWords = Sentence.toCoreLabelList(sent);
+//            Tree parse = lp.apply(rawWords);
+//            System.out.print(sentence + "|-|");
+//            printDescribingPhrase(sentence, query, parse);
+//        }
 
 
         // This option shows loading and using an explicit tokenizer
@@ -123,10 +154,10 @@ class ParserDemo {
 //        tp.printTree(parse);
     }
 
-    private static void printDescribingPhrase(String sentence, String query, Tree parse) {
+    private static void printDescribingPhrase(List <? extends HasWord> sentence, String query, Tree parse) {
 
         // Check if the current sentence contains "iPad Air" in it
-        if (!sentence.toLowerCase().matches(".*" + query.toLowerCase() + ".*")) {
+        if (!sentence.toString().toLowerCase().matches(".*" + query.toLowerCase() + ".*")) {
             return;
         }
 
