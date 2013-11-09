@@ -72,7 +72,11 @@ class ParserDemo {
     public static void demoAPI(LexicalizedParser lp) {
         // This option shows parsing a list of correctly tokenized words
 //        String[] sent = {"This", "is", "an", "easy", "sentence", "."};
-        String sentence = "The iPad Air is lovely, light and awesome";
+//        String sentence = "The iPad Air is lovely, light and awesome";
+//        String sentence = "iPad Air you skinny bitch!!";
+//        String sentence = "I want the iPad Air";
+        String sentence = "I LOVE the iPad Air ad.";
+
         String sent[] = sentence.split(" ");
         List<CoreLabel> rawWords = Sentence.toCoreLabelList(sent);
         Tree parse = lp.apply(rawWords);
