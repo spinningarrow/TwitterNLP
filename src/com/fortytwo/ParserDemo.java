@@ -1,10 +1,10 @@
 package com.fortytwo;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.io.StringReader;
 
 import edu.stanford.nlp.ling.Word;
 import edu.stanford.nlp.process.TokenizerFactory;
@@ -72,22 +72,34 @@ class ParserDemo {
     public static void demoAPI(LexicalizedParser lp) {
         // This option shows parsing a list of correctly tokenized words
         String query = "iPad Air";
+        ArrayList<String> sentences = new ArrayList<String>();
 
 //        String sentence = "iPad Air you skinny bitch!!";
+        try {
+            BufferedReader br  = new BufferedReader (new FileReader ("data/SampleSet3.txt"));
 
-        String[] sentences = {
-            "The iPad Air is lovely, light and awesome",
-            "I want the iPad Air",
-            "I LOVE the iPad Air ad.",
-            "I'm in love with the iPad Air, I'm just saying.",
-            "iPad air is the stupidest name I've heard"
-        };
+            String line = null;
+            while ((line = br.readLine()) != null)
+            {
+                sentences.add(line);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+//        String[] sentences = {
+//            "The iPad Air is lovely, light and awesome",
+//            "I want the iPad Air",
+//            "I LOVE the iPad Air ad.",
+//            "I'm in love with the iPad Air, I'm just saying.",
+//            "iPad air is the stupidest name I've heard"
+//        };
 
         for (String sentence : sentences) {
             String sent[] = sentence.split(" ");
             List<CoreLabel> rawWords = Sentence.toCoreLabelList(sent);
             Tree parse = lp.apply(rawWords);
-
+            System.out.print(sentence + "|-|");
             printDescribingPhrase(sentence, query, parse);
         }
 
