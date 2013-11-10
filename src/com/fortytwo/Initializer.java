@@ -1,7 +1,6 @@
 package com.fortytwo;
 
 import edu.stanford.nlp.ling.CoreLabel;
-import edu.stanford.nlp.ling.HasWord;
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
 import edu.stanford.nlp.process.DocumentPreprocessor;
 import edu.stanford.nlp.process.TokenizerFactory;
@@ -13,8 +12,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -25,11 +22,17 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class Initializer {
+    public static final String DB_NAME = "database_full.db";
+    public static final String PLAINTEXT_SET_NAME = "nlp_merged.clean.normal";
+    public static final String TAGGED_SET_NAME = "nlp_merged.clean.normal.pos";
+    public static final String SERIALIZED_MODEL = "SerializedModel10";
+
     public static void main (String []args)
     {
-        //createDatabase("data/database.db");
-//       readAndStoreTweets("data/database.db", "data/plaintextSet1.txt", "data/taggedSet1.txt");
-        printData("data/database.db");
+
+        createDatabase("data/" + DB_NAME);
+        readAndStoreTweets("data/" + DB_NAME, "data/" + PLAINTEXT_SET_NAME, "data/" + TAGGED_SET_NAME);
+//        printData("data/" + DB_NAME);
     }
 
     private static void readAndStoreTweets(String databaseFile, String plaintextFile, String taggedFile)
@@ -39,11 +42,14 @@ public class Initializer {
             BufferedReader br2 = new BufferedReader(new FileReader(taggedFile));
             String plain_line  = null;
             String tagged_line = null;
+            int count = 0;
 
             while ((plain_line = br1.readLine()) != null)
             {
                 tagged_line = br2.readLine();
                 insertTweet(databaseFile, plain_line, tagged_line);
+
+                System.out.println("Count: " + (++count));
             }
         } catch (Exception e) {
 
@@ -106,7 +112,7 @@ public class Initializer {
     private static void insertTweet (String databaseFile, String plaintextTweet, String taggedTweet)
     {
         // parse it
-        Tree parsedSentence = parseSentence("models/SerializedModel4", taggedTweet);
+        Tree parsedSentence = parseSentence("models/" + SERIALIZED_MODEL, taggedTweet);
 
         // store it
         try {
