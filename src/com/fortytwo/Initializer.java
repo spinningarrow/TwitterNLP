@@ -44,7 +44,6 @@ public class Initializer {
             BufferedReader br2 = new BufferedReader(new FileReader(taggedFile));
             String plain_line  = null;
             String tagged_line = null;
-            int count = 0;
             List <String> plaintextTweets = new ArrayList<String>();
             List <String> taggedTweets = new ArrayList<String>();
             while ((plain_line = br1.readLine()) != null)
@@ -52,9 +51,6 @@ public class Initializer {
                 tagged_line = br2.readLine();
                 plaintextTweets.add(plain_line);
                 taggedTweets.add(tagged_line);
-
-
-                System.out.println("Count: " + (++count));
             }
             store(databaseFile, plaintextTweets, taggedTweets);
         } catch (Exception e) {
@@ -149,8 +145,10 @@ public class Initializer {
                 String sentence = plaintextSentences.get(i);
                 String taggedSentence = taggedSentences.get(i);
                 ps.setString(1, sentence);
-                ps.setBytes(2, Serializer.serialize(parseSentence(SERIALIZED_MODEL, taggedSentence)));
+                ps.setBytes(2, Serializer.serialize(parseSentence("models/" + SERIALIZED_MODEL, taggedSentence)));
                 ps.executeUpdate();
+
+                System.out.println("Count: " + i);
             }
 
             ps.close();
