@@ -12,6 +12,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -43,14 +45,18 @@ public class Initializer {
             String plain_line  = null;
             String tagged_line = null;
             int count = 0;
-
+            List <String> plaintextTweets = new ArrayList<String>();
+            List <String> taggedTweets = new ArrayList<String>();
             while ((plain_line = br1.readLine()) != null)
             {
                 tagged_line = br2.readLine();
-                insertTweet(databaseFile, plain_line, tagged_line);
+                plaintextTweets.add(plain_line);
+                taggedTweets.add(tagged_line);
+
 
                 System.out.println("Count: " + (++count));
             }
+            store(databaseFile, plaintextTweets, taggedTweets);
         } catch (Exception e) {
 
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -109,19 +115,19 @@ public class Initializer {
         }
         System.out.println("Records created successfully");
     }
-    private static void insertTweet (String databaseFile, String plaintextTweet, String taggedTweet)
-    {
-        // parse it
-        Tree parsedSentence = parseSentence("models/" + SERIALIZED_MODEL, taggedTweet);
-
-        // store it
-        try {
-            store(databaseFile, plaintextTweet, Serializer.serialize(parsedSentence));
-        } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
-    }
-    private static void store (String filename, String sentence, byte[] parseTree)
+//    private static void insertTweet (String databaseFile, List<String> plaintextTweets, List<String> taggedTweets)
+//    {
+//        // parse it
+//        Tree parsedSentence = parseSentence("models/" + SERIALIZED_MODEL, taggedTweet);
+//
+//        // store it
+//        try {
+//            store(databaseFile, plaintextTweet, Serializer.serialize(parsedSentence));
+//        } catch (IOException e) {
+//            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//        }
+//    }
+    private static void store (String filename, List<String> plaintextSentences, List<String> taggedSentences)
     {
         Connection c = null;
         Statement stmt = null;
@@ -137,11 +143,17 @@ public class Initializer {
 
             PreparedStatement ps = c.prepareStatement("INSERT INTO TWEETS (TEXT,PARSETREE) " +
                     "VALUES (?,? );");
-            ps.setString(1, sentence);
-            ps.setBytes(2, parseTree);
-            ps.executeUpdate();
+
+            for (int i = 0; i < plaintextSentences.size(); i++)
+            {
+                String sentence = plaintextSentences.get(i);
+                String taggedSentence = taggedSentences.get(i);
+                ps.setString(1, sentence);
+                ps.setBytes(2, Serializer.serialize(parseSentence(SERIALIZED_MODEL, taggedSentence)));
+                ps.executeUpdate();
+            }
+
             ps.close();
-//            stmt.close();
             c.commit();
             c.close();
         } catch ( Exception e ) {
