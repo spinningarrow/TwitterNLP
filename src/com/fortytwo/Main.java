@@ -21,11 +21,15 @@ class Main {
      */
     public static void main(String[] args) {
 
-        String query;
+        // Pass DB path and query as command line arguments
+
+        String query, dbPath;
         if (args.length > 0) {
-            query = args[0];
+            dbPath = args[0];
+            query = args[1];
         } else {
 //            return;
+            dbPath = "data/database.db";
             query = "ipad air";
         }
 
@@ -39,7 +43,7 @@ class Main {
 
             Class.forName("org.sqlite.JDBC");
 
-            c = DriverManager.getConnection("jdbc:sqlite:" + "data/database.db");
+            c = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
             c.setAutoCommit(false);
 
             System.out.println("Opened database successfully");
