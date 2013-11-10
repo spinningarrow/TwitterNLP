@@ -1,6 +1,10 @@
 package com.fortytwo;
 
 import java.io.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -24,137 +28,44 @@ class Main {
      * include in the classpath for Main to work.
      */
     public static void main(String[] args) {
-        Iterable<List<? extends HasWord>> sentences;
-        String tweetSet = "data/SampleSet1_POS.txt";
-        if (args.length > 0) {
-            tweetSet = args[0];
-        }
-        String model = "models/SerializedModel4";
-        if (args.length > 1) {
-            model = args[1];
-        }
-        LexicalizedParser lp = LexicalizedParser.loadModel(model);
-        DocumentPreprocessor dp = new DocumentPreprocessor(tweetSet);
-//        DocumentPreprocessor dp = new DocumentPreprocessor("data/Sample1Tweet.txt");
-        TokenizerFactory<CoreLabel> tf = WhitespaceTokenizer.newCoreLabelTokenizerFactory("");
-
-        dp.setSentenceDelimiter("\n");
-        dp.setTagDelimiter("_");
-        dp.setTokenizerFactory(tf);
-
-        List<List<? extends HasWord>> tmp = new ArrayList<List<? extends HasWord>>();
-
-        for (List<HasWord> sentence : dp) {
-            tmp.add(sentence);
-        }
-
-        sentences = tmp;
         String query = "iPad Air";
 
-        for (List<? extends HasWord> sentence : sentences) {
-            Tree parse = lp.parse(sentence);
-//            try {
-//                ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream("data/outputcrap.ser"));
-//                os.writeObject(parse);
-//                os.close();
-//                ObjectInputStream is = new ObjectInputStream(new FileInputStream("data/outputcrap.ser"));
-//                Tree parse2 = (Tree)is.readObject();
-//                parse2.pennPrint();
-//                parse.pennPrint();
-//            } catch (IOException e) {
-//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//            } catch (ClassNotFoundException e) {
-//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//            }
+        // Connect to the database
+        Connection c;
+        Statement stmt;
 
-            printDescribingPhrase(sentence, query, parse);
-        }
-    }
-    /**
-     * demoDP demonstrates turning a file into tokens and then parse
-     * trees.  Note that the trees are printed by calling pennPrint on
-     * the Tree object.  It is also possible to pass a PrintWriter to
-     * pennPrint if you want to capture the output.
-     */
-    public static void demoDP(LexicalizedParser lp, String filename) {
-        // This option shows loading and sentence-segmenting and tokenizing
-        // a file using DocumentPreprocessor.
-        TreebankLanguagePack tlp = new PennTreebankLanguagePack();
-        GrammaticalStructureFactory gsf = tlp.grammaticalStructureFactory();
-        // You could also create a tokenizer here (as below) and pass it
-        // to DocumentPreprocessor
-        for (List<HasWord> sentence : new DocumentPreprocessor(filename)) {
-            Tree parse = lp.apply(sentence);
-            parse.pennPrint();
-            System.out.println();
-
-            GrammaticalStructure gs = gsf.newGrammaticalStructure(parse);
-            Collection tdl = gs.typedDependenciesCCprocessed();
-            System.out.println(tdl);
-            System.out.println();
-        }
-    }
-
-    /**
-     * demoAPI demonstrates other ways of calling the parser with
-     * already tokenized text, or in some cases, raw text that needs to
-     * be tokenized as a single sentence.  Output is handled with a
-     * TreePrint object.  Note that the options used when creating the
-     * TreePrint can determine what results to print out.  Once again,
-     * one can capture the output by passing a PrintWriter to
-     * TreePrint.printTree.
-     */
-    public static void demoAPI(LexicalizedParser lp) {
-        // This option shows parsing a list of correctly tokenized words
-        ArrayList<String> sentences = new ArrayList<String>();
-
-//        String sentence = "iPad Air you skinny bitch!!";
         try {
-            BufferedReader br  = new BufferedReader (new FileReader ("data/SampleSet3.txt"));
 
-            String line = null;
-            while ((line = br.readLine()) != null)
-            {
-                sentences.add(line);
+            Class.forName("org.sqlite.JDBC");
+
+            c = DriverManager.getConnection("jdbc:sqlite:" + "data/database.db");
+            c.setAutoCommit(false);
+
+            System.out.println("Opened database successfully");
+
+            stmt = c.createStatement();
+            ResultSet rs = stmt.executeQuery( "SELECT * FROM TWEETS;" );
+
+            // Read each row
+            // For each row, get the sentence and its parse tree
+            while ( rs.next() ) {
+                String sentence = rs.getString("text");
+                Tree parseTree = (Tree) Serializer.deserialize(rs.getBytes("parsetree"));
+
+                printDescribingPhrase(sentence, query, parseTree);
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            rs.close();
+            stmt.close();
+            c.close();
         }
-//        String[] sentences = {
-//            "The iPad Air is lovely, light and awesome",
-//            "I want the iPad Air",
-//            "I LOVE the iPad Air ad.",
-//            "I'm in love with the iPad Air, I'm just saying.",
-//            "iPad air is the stupidest name I've heard"
-//        };
 
-//        for (String sentence : sentences) {
-//            String sent[] = sentence.split(" ");
-//            List<CoreLabel> rawWords = Sentence.toCoreLabelList(sent);
-//            Tree parse = lp.apply(rawWords);
-//            System.out.print(sentence + "|-|");
-//            printDescribingPhrase(sentence, query, parse);
-//        }
+        catch ( Exception e ) {
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }
 
-
-        // This option shows loading and using an explicit tokenizer
-//        String sent2 = "This is another sentence.";
-//        TokenizerFactory<CoreLabel> tokenizerFactory =
-//                PTBTokenizer.factory(new CoreLabelTokenFactory(), "");
-//        List<CoreLabel> rawWords2 =
-//                tokenizerFactory.getTokenizer(new StringReader(sent2)).tokenize();
-//        parse = lp.apply(rawWords2);
-//
-//        TreebankLanguagePack tlp = new PennTreebankLanguagePack();
-//        GrammaticalStructureFactory gsf = tlp.grammaticalStructureFactory();
-//        GrammaticalStructure gs = gsf.newGrammaticalStructure(parse);
-//        List<TypedDependency> tdl = gs.typedDependenciesCCprocessed();
-//        System.out.println(tdl);
-//        System.out.println();
-//
-//        TreePrint tp = new TreePrint("penn,typedDependenciesCollapsed");
-//        tp.printTree(parse);
+        System.out.println("Operation done successfully");
     }
 
     private static boolean isTagInTree(String tag, Tree treeToCheck)
@@ -191,12 +102,12 @@ class Main {
         return completeTree;
     }
 
-    private static void printDescribingPhrase(List <? extends HasWord> sentence, String query, Tree parse) {
+    private static void printDescribingPhrase(String sentence, String query, Tree parse) {
 
         // Check if the current sentence contains "iPad Air" in it
         parse.pennPrint();
-        System.out.print(Sentence.listToString(sentence) + "\t|-|\t");
-        if (!Sentence.listToString(sentence).toLowerCase().matches(".*" + query.toLowerCase() + ".*")) {
+        System.out.print(sentence + "\t|-|\t");
+        if (!sentence.toLowerCase().matches(".*" + query.toLowerCase() + ".*")) {
             return;
         }
 
@@ -217,18 +128,6 @@ class Main {
             }
 
             if (currentTree.yieldWords().get(0).toString().toLowerCase().matches(".*\\b"+lastWord+"\\b.*")) {
-
-
-//                Tree descriptionTree = currentTree.parent(parse).siblings(parse).get(0);
-//                if (descriptionTree != null && !descriptionTree.value().equals("VB")) { // TODO VB is wrong, there are more cases
-//                    List<Tree> subTrees = currentTree.parent(parse).parent(parse).siblings(parse);
-//                    for (Tree subTree : subTrees) {
-//                        if (subTree.value().equals("PP")) {
-//                            descriptionTree = subTree;
-//                            break;
-//                        }
-//                    }
-//                }
                 Tree descriptionTree = getDescriptiveSubtree(parse, currentTree);
                 if (descriptionTree != null) {
                     // Print out the words in the tree (should be the phrase describing the iPad)
