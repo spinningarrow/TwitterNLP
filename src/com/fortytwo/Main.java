@@ -1,22 +1,14 @@
 package com.fortytwo;
 
-import java.io.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
 import edu.stanford.nlp.ling.Word;
-import edu.stanford.nlp.process.*;
-import edu.stanford.nlp.ling.CoreLabel;
-import edu.stanford.nlp.ling.HasWord;
-import edu.stanford.nlp.ling.Sentence;
 import edu.stanford.nlp.trees.*;
-import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
 
 class Main {
 
@@ -28,7 +20,16 @@ class Main {
      * include in the classpath for Main to work.
      */
     public static void main(String[] args) {
-        String query = "iPad Air";
+
+        String query;
+        if (args.length > 0) {
+            query = args[0];
+        } else {
+//            return;
+            query = "ipad air";
+        }
+
+        query = query.toLowerCase();
 
         // Connect to the database
         Connection c;
@@ -44,7 +45,8 @@ class Main {
             System.out.println("Opened database successfully");
 
             stmt = c.createStatement();
-            ResultSet rs = stmt.executeQuery( "SELECT * FROM TWEETS;" );
+            ResultSet rs = stmt.executeQuery( "SELECT * FROM TWEETS;");
+//            ResultSet rs = stmt.executeQuery( "SELECT * FROM TWEETS WHERE LOWER(text) LIKE '%" + query + "%';");
 
             // Read each row
             // For each row, get the sentence and its parse tree
@@ -52,7 +54,7 @@ class Main {
                 String sentence = rs.getString("text");
                 Tree parseTree = (Tree) Serializer.deserialize(rs.getBytes("parsetree"));
 
-                printDescribingPhrase(sentence, query, parseTree);
+                System.out.println(findDescribingPhrase(sentence, query, parseTree));
             }
 
             rs.close();
@@ -70,7 +72,7 @@ class Main {
 
     private static boolean isTagInTree(String tag, Tree treeToCheck)
     {
-        return treeToCheck.toString().matches(".*\\b"+tag+"\\b.*");
+        return treeToCheck.toString().matches(".*\\b" + tag + "\\b.*");
     }
 
     private static Tree getDescriptiveSubtree(Tree completeTree, Tree matchedNode)
@@ -102,16 +104,11 @@ class Main {
         return completeTree;
     }
 
-    private static void printDescribingPhrase(String sentence, String query, Tree parse) {
+    private static String findDescribingPhrase(String sentence, String query, Tree parse) {
 
-        // Check if the current sentence contains "iPad Air" in it
-        parse.pennPrint();
-        System.out.print(sentence + "\t|-|\t");
-        if (!sentence.toLowerCase().matches(".*" + query.toLowerCase() + ".*")) {
-            return;
-        }
+        String result = null;
 
-        // Loop through the parse tree till you get to the node containing the word iPad
+        // Loop through the parse tree till you get to the node containing the last word of the query
         // (there are two nodes, one containing the label and the word, and one containing just the word)
         Iterator treeIterator = parse.iterator();
         Tree currentTree;
@@ -127,20 +124,26 @@ class Main {
                 continue;
             }
 
-            if (currentTree.yieldWords().get(0).toString().toLowerCase().matches(".*\\b"+lastWord+"\\b.*")) {
+            if (currentTree.yieldWords().get(0).toString().toLowerCase().matches(".*\\b" + lastWord + "\\b.*")) {
+
                 Tree descriptionTree = getDescriptiveSubtree(parse, currentTree);
+
                 if (descriptionTree != null) {
                     // Print out the words in the tree (should be the phrase describing the iPad)
                     for (Word word : descriptionTree.yieldWords()) {
-                        System.out.print(word + " ");
+                        result += word + " ";
                     }
-                    System.out.println();
                 }
 
-                // Don't continue iteration, we already found the iPad Air
+                // Don't continue iteration, we already found the query
                 break;
             }
         }
+
+        if (result == null) {
+            result = sentence;
+        }
+        return result;
     }
 
     private Main() {
