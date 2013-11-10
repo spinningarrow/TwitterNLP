@@ -35,6 +35,8 @@ class Main {
 
         query = query.toLowerCase();
 
+        System.err.println("Showing describing phrases for query: " + query);
+
         // Connect to the database
         Connection c;
         Statement stmt;
@@ -45,8 +47,6 @@ class Main {
 
             c = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
             c.setAutoCommit(false);
-
-            System.out.println("Opened database successfully");
 
             stmt = c.createStatement();
             ResultSet rs = stmt.executeQuery( "SELECT * FROM TWEETS;");
@@ -70,8 +70,6 @@ class Main {
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
             System.exit(0);
         }
-
-        System.out.println("Operation done successfully");
     }
 
     private static boolean isTagInTree(String tag, Tree treeToCheck)
