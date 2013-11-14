@@ -9,6 +9,7 @@ import edu.stanford.nlp.process.WhitespaceTokenizer;
 import edu.stanford.nlp.trees.Tree;
 
 import java.io.*;
+import java.net.URI;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +23,11 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class Initializer {
-    public static final String DB_NAME = "database_full.db";
+    public static final String DB_NAME = "database.db";
+    public static final String POSTGRES_URL = "jdbc:postgresql://ec2-54-204-37-113.compute-1.amazonaws.com:5432/da51bj93nvtud3?ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory";
+    public static final String POSTGRES_USER = "oazxckmebglypc";
+    public static final String POSTGRES_PASSWORD = "GO9ixYeLFecx74dASeey5u_kgG";
+
     public static final String PLAINTEXT_SET_NAME = "nlp_merged.clean.normal";
     public static final String TAGGED_SET_NAME = "nlp_merged.clean.normal.pos";
 
@@ -37,7 +42,7 @@ public class Initializer {
 
         createDatabase("data/" + DB_NAME);
         readAndStoreTweets("data/" + DB_NAME, "data/" + PLAINTEXT_SET_NAME, "data/" + TAGGED_SET_NAME);
-        printData("data/" + DB_NAME);
+//        printData("data/" + DB_NAME);
     }
 
     private static void readAndStoreTweets(String databaseFile, String plaintextFile, String taggedFile)
@@ -93,9 +98,13 @@ public class Initializer {
         Connection c = null;
         Statement stmt = null;
         try {
-            Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:" + filename);
-            c.setAutoCommit(false);
+//            Class.forName("org.sqlite.JDBC");
+//            c = DriverManager.getConnection("jdbc:sqlite:" + filename);
+//            c.setAutoCommit(false);
+
+            Class.forName("org.postgresql.Driver");
+            c = DriverManager.getConnection(POSTGRES_URL, POSTGRES_USER, POSTGRES_PASSWORD);
+
             System.out.println("Opened database successfully");
 
             stmt = c.createStatement();
@@ -122,14 +131,20 @@ public class Initializer {
         Connection c = null;
         Statement stmt = null;
         try {
-            Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:" + filename);
+//            Class.forName("org.sqlite.JDBC");
+//            c = DriverManager.getConnection("jdbc:sqlite:" + filename);
+            Class.forName("org.postgresql.Driver");
+            c = DriverManager.getConnection(POSTGRES_URL, POSTGRES_USER, POSTGRES_PASSWORD);
             System.out.println("Opened database successfully");
 
             stmt = c.createStatement();
+
+            String dropSql = "DROP TABLE tweets";
+            stmt.execute(dropSql);
+
             String sql = "CREATE TABLE TWEETS " +
                     "(TEXT           TEXT    NOT NULL, " +
-                    " PARSETREE      BLOB     NOT NULL)";
+                    " PARSETREE      TEXT     NOT NULL)";
             stmt.executeUpdate(sql);
             stmt.close();
             c.close();
@@ -157,9 +172,13 @@ public class Initializer {
         System.out.println("In store");
         Connection c = null;
         Statement stmt = null;
+        System.out.println("Starting DB shizz (store method).");
+
         try {
-            Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:" + filename);
+//            Class.forName("org.sqlite.JDBC");
+//            c = DriverManager.getConnection("jdbc:sqlite:" + filename);
+            Class.forName("org.postgresql.Driver");
+            c = DriverManager.getConnection(POSTGRES_URL, POSTGRES_USER, POSTGRES_PASSWORD);
             c.setAutoCommit(false);
 
             //stmt = c.createStatement();
@@ -183,6 +202,9 @@ public class Initializer {
             ps.close();
             c.commit();
             c.close();
+
+            System.out.println("Ending DB shizz (store method).");
+
         } catch ( Exception e ) {
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
             System.exit(0);
@@ -229,7 +251,7 @@ public class Initializer {
             count ++;
             if (count % 1000 == 0)
             {
-                System.out.println("Sentence addition count: " + count);
+//                System.out.println("Sentence addition count: " + count);
             }
         }
         System.out.println("Sentences added");
@@ -243,7 +265,7 @@ public class Initializer {
             count ++;
             if (count % 1000 == 0)
             {
-                System.out.println("Parse count: " + count);
+//                System.out.println("Parse count: " + count);
             }
         }
         return trees;
