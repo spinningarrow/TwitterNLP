@@ -39,9 +39,10 @@ public class Initializer {
 
     public static void main (String []args)
     {
-
+//        String plaintext_file = args[0];
+//        String tagged_file = args[1];
         createDatabase("data/" + DB_NAME);
-        readAndStoreTweets("data/" + DB_NAME, "data/" + PLAINTEXT_SET_NAME, "data/" + TAGGED_SET_NAME);
+//        readAndStoreTweets("data/" + DB_NAME, plaintext_file, tagged_file);
 //        printData("data/" + DB_NAME);
     }
 
@@ -104,7 +105,7 @@ public class Initializer {
 
             Class.forName("org.postgresql.Driver");
             c = DriverManager.getConnection(POSTGRES_URL, POSTGRES_USER, POSTGRES_PASSWORD);
-
+            c.setAutoCommit(false);
             System.out.println("Opened database successfully");
 
             stmt = c.createStatement();
@@ -116,6 +117,7 @@ public class Initializer {
                 parseTree.pennPrint();
                 System.out.println();
             }
+            c.commit();
             rs.close();
             stmt.close();
             c.close();
