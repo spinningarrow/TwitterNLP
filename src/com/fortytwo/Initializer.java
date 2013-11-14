@@ -1,6 +1,7 @@
 package com.fortytwo;
 
 import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.ling.HasWord;
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
 import edu.stanford.nlp.process.DocumentPreprocessor;
 import edu.stanford.nlp.process.TokenizerFactory;
@@ -27,6 +28,9 @@ public class Initializer {
     public static final String DB_NAME = "database_full.db";
     public static final String PLAINTEXT_SET_NAME = "nlp_merged.clean.normal";
     public static final String TAGGED_SET_NAME = "nlp_merged.clean.normal.pos";
+
+//    public static final String TAGGED_SET_NAME = "SampleSet1_POS.txt";
+//    public static final String PLAINTEXT_SET_NAME = "plaintextSet1.txt";
     public static final String SERIALIZED_MODEL = "SerializedModel10";
 
     public static void main (String []args)
@@ -34,7 +38,7 @@ public class Initializer {
 
         createDatabase("data/" + DB_NAME);
         readAndStoreTweets("data/" + DB_NAME, "data/" + PLAINTEXT_SET_NAME, "data/" + TAGGED_SET_NAME);
-//        printData("data/" + DB_NAME);
+        printData("data/" + DB_NAME);
     }
 
     private static void readAndStoreTweets(String databaseFile, String plaintextFile, String taggedFile)
@@ -44,6 +48,7 @@ public class Initializer {
             BufferedReader br2 = new BufferedReader(new FileReader(taggedFile));
             String plain_line  = null;
             String tagged_line = null;
+            int count = 0;
             List <String> plaintextTweets = new ArrayList<String>();
             List <String> taggedTweets = new ArrayList<String>();
             while ((plain_line = br1.readLine()) != null)
@@ -51,8 +56,12 @@ public class Initializer {
                 tagged_line = br2.readLine();
                 plaintextTweets.add(plain_line);
                 taggedTweets.add(tagged_line);
+
+
+                System.out.println("Count: " + (++count));
             }
-            store(databaseFile, plaintextTweets, taggedTweets);
+            List<Tree> trees = parseFile("models/"+ SERIALIZED_MODEL, taggedFile);
+            store(databaseFile, plaintextTweets, trees);
         } catch (Exception e) {
 
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -123,7 +132,7 @@ public class Initializer {
 //            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
 //        }
 //    }
-    private static void store (String filename, List<String> plaintextSentences, List<String> taggedSentences)
+    private static void store (String filename, List<String> plaintextSentences, List<Tree> trees)
     {
         Connection c = null;
         Statement stmt = null;
@@ -143,12 +152,9 @@ public class Initializer {
             for (int i = 0; i < plaintextSentences.size(); i++)
             {
                 String sentence = plaintextSentences.get(i);
-                String taggedSentence = taggedSentences.get(i);
                 ps.setString(1, sentence);
-                ps.setBytes(2, Serializer.serialize(parseSentence("models/" + SERIALIZED_MODEL, taggedSentence)));
+                ps.setBytes(2, Serializer.serialize(trees.get(i)));
                 ps.executeUpdate();
-
-                System.out.println("Count: " + i);
             }
 
             ps.close();
@@ -175,5 +181,31 @@ public class Initializer {
 
         Tree parseTree = lp.parse(sentence);
         return parseTree;
+    }
+
+    public static List<Tree> parseFile (String modelFile, String filename)
+    {
+        LexicalizedParser lp = LexicalizedParser.loadModel(modelFile);
+//        DocumentPreprocessor dp = new DocumentPreprocessor(new StringReader(sentence));
+        DocumentPreprocessor dp = new DocumentPreprocessor(filename);
+        TokenizerFactory<CoreLabel> tf = WhitespaceTokenizer.newCoreLabelTokenizerFactory("");
+
+        dp.setSentenceDelimiter("\n");
+        dp.setTagDelimiter("_");
+        dp.setTokenizerFactory(tf);
+
+        List<Tree> trees = new ArrayList<Tree>();
+        Iterable<List<? extends HasWord>> sentences;
+        ArrayList<List<? extends HasWord>> tmp = new ArrayList<List<? extends HasWord>>();
+        for (List<HasWord> sentence : dp)
+        {
+            tmp.add(sentence);
+        }
+        sentences = tmp;
+        for (List <?extends HasWord> sentence : sentences)
+        {
+            trees.add(lp.parse(sentence));
+        }
+        return trees;
     }
 }
