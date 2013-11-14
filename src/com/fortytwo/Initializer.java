@@ -8,10 +8,7 @@ import edu.stanford.nlp.process.TokenizerFactory;
 import edu.stanford.nlp.process.WhitespaceTokenizer;
 import edu.stanford.nlp.trees.Tree;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.StringReader;
+import java.io.*;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +29,8 @@ public class Initializer {
 //    public static final String TAGGED_SET_NAME = "SampleSet1_POS.txt";
 //    public static final String PLAINTEXT_SET_NAME = "plaintextSet1.txt";
     public static final String SERIALIZED_MODEL = "SerializedModel10";
+    public static final String PLAINTEXT_TEMP = "plaintext.temp";
+    public static final String TAGGED_TEMP = "tagged.temp";
 
     public static void main (String []args)
     {
@@ -48,24 +47,45 @@ public class Initializer {
             BufferedReader br2 = new BufferedReader(new FileReader(taggedFile));
             String plain_line  = null;
             String tagged_line = null;
-            int count = 0;
+
             List <String> plaintextTweets = new ArrayList<String>();
             List <String> taggedTweets = new ArrayList<String>();
+            int count = 0;
             while ((plain_line = br1.readLine()) != null)
             {
                 tagged_line = br2.readLine();
+                count ++;
                 plaintextTweets.add(plain_line);
                 taggedTweets.add(tagged_line);
-
-
-                System.out.println("Count: " + (++count));
+                if (count % 1000 == 0)
+                {
+                    cacheSentences(plaintextTweets, taggedTweets);
+                    List<Tree> trees = parseFile("models/"+ SERIALIZED_MODEL, "data/" + TAGGED_TEMP);
+                    store(databaseFile, plaintextTweets, trees);
+                    plaintextTweets = new ArrayList<String>();
+                    taggedTweets = new ArrayList<String>();
+                    System.out.println("Processed count: " + count);
+                }
             }
-            List<Tree> trees = parseFile("models/"+ SERIALIZED_MODEL, taggedFile);
-            store(databaseFile, plaintextTweets, trees);
         } catch (Exception e) {
 
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
+    }
+
+    private static void cacheSentences (List<String> plaintextSentences, List<String> taggedSentences) throws IOException {
+        BufferedWriter bw1 = new BufferedWriter (new FileWriter("data/"+ PLAINTEXT_TEMP));
+        for (int i = 0; i < plaintextSentences.size(); i++)
+        {
+            bw1.write(plaintextSentences.get(i) + "\n");
+        }
+        bw1.close();
+        BufferedWriter bw2 = new BufferedWriter (new FileWriter("data/"+ TAGGED_TEMP));
+        for (int i = 0; i < taggedSentences.size(); i++)
+        {
+            bw2.write(taggedSentences.get(i) + "\n");
+        }
+        bw2.close();
     }
 
     private static void printData(String filename)
@@ -134,6 +154,7 @@ public class Initializer {
 //    }
     private static void store (String filename, List<String> plaintextSentences, List<Tree> trees)
     {
+        System.out.println("In store");
         Connection c = null;
         Statement stmt = null;
         try {
@@ -155,6 +176,8 @@ public class Initializer {
                 ps.setString(1, sentence);
                 ps.setBytes(2, Serializer.serialize(trees.get(i)));
                 ps.executeUpdate();
+                if (i % 1000 == 0)
+                    System.out.println("Count: " + i);
             }
 
             ps.close();
@@ -185,6 +208,7 @@ public class Initializer {
 
     public static List<Tree> parseFile (String modelFile, String filename)
     {
+        System.out.println("In parseFile");
         LexicalizedParser lp = LexicalizedParser.loadModel(modelFile);
 //        DocumentPreprocessor dp = new DocumentPreprocessor(new StringReader(sentence));
         DocumentPreprocessor dp = new DocumentPreprocessor(filename);
@@ -197,14 +221,30 @@ public class Initializer {
         List<Tree> trees = new ArrayList<Tree>();
         Iterable<List<? extends HasWord>> sentences;
         ArrayList<List<? extends HasWord>> tmp = new ArrayList<List<? extends HasWord>>();
+        int count = 0;
+        System.out.println("Starting the file shizz");
         for (List<HasWord> sentence : dp)
         {
             tmp.add(sentence);
+            count ++;
+            if (count % 1000 == 0)
+            {
+                System.out.println("Sentence addition count: " + count);
+            }
         }
+        System.out.println("Sentences added");
+        count = 0;
         sentences = tmp;
         for (List <?extends HasWord> sentence : sentences)
         {
-            trees.add(lp.parse(sentence));
+            Tree t = lp.parse(sentence);
+            trees.add(t);
+//            t.pennPrint();
+            count ++;
+            if (count % 1000 == 0)
+            {
+                System.out.println("Parse count: " + count);
+            }
         }
         return trees;
     }
