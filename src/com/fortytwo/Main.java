@@ -49,8 +49,8 @@ class Main {
             c.setAutoCommit(false);
 
             stmt = c.createStatement();
-            ResultSet rs = stmt.executeQuery( "SELECT * FROM TWEETS;");
-//            ResultSet rs = stmt.executeQuery( "SELECT * FROM TWEETS WHERE LOWER(text) LIKE '%" + query + "%';");
+//            ResultSet rs = stmt.executeQuery( "SELECT * FROM TWEETS;");
+            ResultSet rs = stmt.executeQuery( "SELECT * FROM TWEETS WHERE LOWER(text) LIKE '%" + query + "%';");
 
             // Read each row
             // For each row, get the sentence and its parse tree
@@ -58,7 +58,8 @@ class Main {
                 String sentence = rs.getString("text");
                 Tree parseTree = (Tree) Serializer.deserialize(rs.getBytes("parsetree"));
 
-                System.out.println(findDescribingPhrase(sentence, query, parseTree));
+                String describingPhrase = findDescribingPhrase(sentence, query, parseTree);
+                if (describingPhrase != null) System.out.println(describingPhrase);
             }
 
             rs.close();
@@ -108,7 +109,7 @@ class Main {
 
     private static String findDescribingPhrase(String sentence, String query, Tree parse) {
 
-        String result = null;
+        String result = "";
 
         // Loop through the parse tree till you get to the node containing the last word of the query
         // (there are two nodes, one containing the label and the word, and one containing just the word)
@@ -142,8 +143,10 @@ class Main {
             }
         }
 
-        if (result == null) {
-            result = sentence;
+        result = result.toLowerCase().indexOf(query) == 0 ? result.toLowerCase().replace(query, "").trim() : result;
+
+        if (result == "" || result.toLowerCase().trim().indexOf(' ') == -1) {
+            result = null;
         }
         return result;
     }
