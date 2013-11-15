@@ -19,6 +19,10 @@ class Main {
      * demonstrates loading from the models jar file, which you need to
      * include in the classpath for Main to work.
      */
+    public static final String POSTGRES_URL = "jdbc:postgresql://ec2-54-204-37-113.compute-1.amazonaws.com:5432/da51bj93nvtud3?ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory";
+    public static final String POSTGRES_USER = "oazxckmebglypc";
+    public static final String POSTGRES_PASSWORD = "GO9ixYeLFecx74dASeey5u_kgG";
+
     public static void main(String[] args) {
 
         // Pass DB path and query as command line arguments
@@ -43,9 +47,11 @@ class Main {
 
         try {
 
-            Class.forName("org.sqlite.JDBC");
+//            Class.forName("org.sqlite.JDBC");
 
-            c = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+//            c = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+            Class.forName("org.postgresql.Driver");
+            c = DriverManager.getConnection(POSTGRES_URL, POSTGRES_USER, POSTGRES_PASSWORD);
             c.setAutoCommit(false);
 
             stmt = c.createStatement();
