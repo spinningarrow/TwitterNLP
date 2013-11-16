@@ -75,9 +75,13 @@ public class Initializer {
                     store(databaseFile, plaintextTweets, trees);
                     plaintextTweets = new ArrayList<String>();
                     taggedTweets = new ArrayList<String>();
-                    System.out.println("Progression: " + (count*100/56310) + "%");
+                    System.out.println("Progression: " + (count*100/563010) + "%");
                 }
             }
+            cacheSentences(plaintextTweets, taggedTweets);
+            List<Tree> trees = parseFile("models/"+ SERIALIZED_MODEL, "temp/" + TAGGED_TEMP);
+            store(databaseFile, plaintextTweets, trees);
+            System.out.println("Progression: " + (count * 100 / 563010) + "%");
         } catch (Exception e) {
 
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
