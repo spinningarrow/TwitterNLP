@@ -47,11 +47,11 @@ class Main {
 
         try {
 
-//            Class.forName("org.sqlite.JDBC");
+            Class.forName("org.sqlite.JDBC");
 
-//            c = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
-            Class.forName("org.postgresql.Driver");
-            c = DriverManager.getConnection(POSTGRES_URL, POSTGRES_USER, POSTGRES_PASSWORD);
+            c = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+//            Class.forName("org.postgresql.Driver");
+//            c = DriverManager.getConnection(POSTGRES_URL, POSTGRES_USER, POSTGRES_PASSWORD);
             c.setAutoCommit(false);
 
             stmt = c.createStatement();
