@@ -48,7 +48,7 @@ public class Initializer {
         }
         createDatabase("data/" + DB_NAME);
         readAndStoreTweets("data/" + DB_NAME, plaintext_file, tagged_file);
-        printData("data/" + DB_NAME);
+//        printData("data/" + DB_NAME);
     }
 
     private static void readAndStoreTweets(String databaseFile, String plaintextFile, String taggedFile)
