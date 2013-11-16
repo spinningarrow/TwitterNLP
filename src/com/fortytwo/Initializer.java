@@ -39,11 +39,16 @@ public class Initializer {
 
     public static void main (String []args)
     {
-//        String plaintext_file = args[0];
-//        String tagged_file = args[1];
+        String plaintext_file = "data/" + PLAINTEXT_SET_NAME;
+        String tagged_file = "data/" + TAGGED_SET_NAME;
+        if (args.length > 0)
+        {
+            plaintext_file = args[0];
+            tagged_file = args[1];
+        }
         createDatabase("data/" + DB_NAME);
-//        readAndStoreTweets("data/" + DB_NAME, plaintext_file, tagged_file);
-//        printData("data/" + DB_NAME);
+        readAndStoreTweets("data/" + DB_NAME, plaintext_file, tagged_file);
+        printData("data/" + DB_NAME);
     }
 
     private static void readAndStoreTweets(String databaseFile, String plaintextFile, String taggedFile)
@@ -66,11 +71,11 @@ public class Initializer {
                 if (count % 1000 == 0)
                 {
                     cacheSentences(plaintextTweets, taggedTweets);
-                    List<Tree> trees = parseFile("models/"+ SERIALIZED_MODEL, "data/" + TAGGED_TEMP);
+                    List<Tree> trees = parseFile("models/"+ SERIALIZED_MODEL, "temp/" + TAGGED_TEMP);
                     store(databaseFile, plaintextTweets, trees);
                     plaintextTweets = new ArrayList<String>();
                     taggedTweets = new ArrayList<String>();
-                    System.out.println("Processed count: " + count);
+                    System.out.println("Progression: " + (count*100/56310) + "%");
                 }
             }
         } catch (Exception e) {
@@ -80,13 +85,13 @@ public class Initializer {
     }
 
     private static void cacheSentences (List<String> plaintextSentences, List<String> taggedSentences) throws IOException {
-        BufferedWriter bw1 = new BufferedWriter (new FileWriter("data/"+ PLAINTEXT_TEMP));
+        BufferedWriter bw1 = new BufferedWriter (new FileWriter("temp/"+ PLAINTEXT_TEMP));
         for (int i = 0; i < plaintextSentences.size(); i++)
         {
             bw1.write(plaintextSentences.get(i) + "\n");
         }
         bw1.close();
-        BufferedWriter bw2 = new BufferedWriter (new FileWriter("data/"+ TAGGED_TEMP));
+        BufferedWriter bw2 = new BufferedWriter (new FileWriter("temp/"+ TAGGED_TEMP));
         for (int i = 0; i < taggedSentences.size(); i++)
         {
             bw2.write(taggedSentences.get(i) + "\n");
@@ -99,13 +104,13 @@ public class Initializer {
         Connection c = null;
         Statement stmt = null;
         try {
-//            Class.forName("org.sqlite.JDBC");
-//            c = DriverManager.getConnection("jdbc:sqlite:" + filename);
-//            c.setAutoCommit(false);
-
-            Class.forName("org.postgresql.Driver");
-            c = DriverManager.getConnection(POSTGRES_URL, POSTGRES_USER, POSTGRES_PASSWORD);
+            Class.forName("org.sqlite.JDBC");
+            c = DriverManager.getConnection("jdbc:sqlite:" + filename);
             c.setAutoCommit(false);
+
+//            Class.forName("org.postgresql.Driver");
+//            c = DriverManager.getConnection(POSTGRES_URL, POSTGRES_USER, POSTGRES_PASSWORD);
+//            c.setAutoCommit(false);
             System.out.println("Opened database successfully");
 
             stmt = c.createStatement();
@@ -133,29 +138,29 @@ public class Initializer {
         Connection c = null;
         Statement stmt = null;
         try {
-//            Class.forName("org.sqlite.JDBC");
-//            c = DriverManager.getConnection("jdbc:sqlite:" + filename);
-            Class.forName("org.postgresql.Driver");
-            c = DriverManager.getConnection(POSTGRES_URL, POSTGRES_USER, POSTGRES_PASSWORD);
-            System.out.println("Opened database successfully");
+            Class.forName("org.sqlite.JDBC");
+            c = DriverManager.getConnection("jdbc:sqlite:" + filename);
+//            Class.forName("org.postgresql.Driver");
+//            c = DriverManager.getConnection(POSTGRES_URL, POSTGRES_USER, POSTGRES_PASSWORD);
 
             stmt = c.createStatement();
 
-            String dropSql = "DROP TABLE tweets";
-            stmt.execute(dropSql);
+//            String dropSql = "DROP TABLE tweets";
+//            stmt.execute(dropSql);
 
             String sql = "CREATE TABLE TWEETS " +
                     "(TEXT           TEXT    NOT NULL, " +
-                    " PARSETREE      TEXT     NOT NULL)";
+                    " PARSETREE      BLOB     NOT NULL)";
             stmt.executeUpdate(sql);
             stmt.close();
             c.close();
 
         } catch ( Exception e ) {
-            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.err.println( e.getClass().getName() + ": " + e.getMessage());
+            System.out.println("Try deleting data/database.db and try again.");
             System.exit(0);
         }
-        System.out.println("Records created successfully");
+        System.out.println("Database created successfully");
     }
 //    private static void insertTweet (String databaseFile, List<String> plaintextTweets, List<String> taggedTweets)
 //    {
@@ -171,16 +176,14 @@ public class Initializer {
 //    }
     private static void store (String filename, List<String> plaintextSentences, List<Tree> trees)
     {
-        System.out.println("In store");
         Connection c = null;
         Statement stmt = null;
-        System.out.println("Starting DB shizz (store method).");
 
         try {
-//            Class.forName("org.sqlite.JDBC");
-//            c = DriverManager.getConnection("jdbc:sqlite:" + filename);
-            Class.forName("org.postgresql.Driver");
-            c = DriverManager.getConnection(POSTGRES_URL, POSTGRES_USER, POSTGRES_PASSWORD);
+            Class.forName("org.sqlite.JDBC");
+            c = DriverManager.getConnection("jdbc:sqlite:" + filename);
+//            Class.forName("org.postgresql.Driver");
+//            c = DriverManager.getConnection(POSTGRES_URL, POSTGRES_USER, POSTGRES_PASSWORD);
             c.setAutoCommit(false);
 
             //stmt = c.createStatement();
@@ -197,18 +200,16 @@ public class Initializer {
                 ps.setString(1, sentence);
                 ps.setBytes(2, Serializer.serialize(trees.get(i)));
                 ps.executeUpdate();
-                if (i % 1000 == 0)
-                    System.out.println("Count: " + i);
+
             }
 
             ps.close();
             c.commit();
             c.close();
 
-            System.out.println("Ending DB shizz (store method).");
-
         } catch ( Exception e ) {
             System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.out.println("Try deleting data/database.db and try again.");
             System.exit(0);
         }
     }
@@ -232,7 +233,6 @@ public class Initializer {
 
     public static List<Tree> parseFile (String modelFile, String filename)
     {
-        System.out.println("In parseFile");
         LexicalizedParser lp = LexicalizedParser.loadModel(modelFile);
 //        DocumentPreprocessor dp = new DocumentPreprocessor(new StringReader(sentence));
         DocumentPreprocessor dp = new DocumentPreprocessor(filename);
@@ -245,30 +245,28 @@ public class Initializer {
         List<Tree> trees = new ArrayList<Tree>();
         Iterable<List<? extends HasWord>> sentences;
         ArrayList<List<? extends HasWord>> tmp = new ArrayList<List<? extends HasWord>>();
-        int count = 0;
-        System.out.println("Starting the file shizz");
+//        int count = 0;
         for (List<HasWord> sentence : dp)
         {
             tmp.add(sentence);
-            count ++;
-            if (count % 1000 == 0)
-            {
-//                System.out.println("Sentence addition count: " + count);
-            }
+//            count ++;
+//            if (count % 1000 == 0)
+//            {
+////                System.out.println("Sentence addition count: " + count);
+//            }
         }
-        System.out.println("Sentences added");
-        count = 0;
+//        count = 0;
         sentences = tmp;
         for (List <?extends HasWord> sentence : sentences)
         {
             Tree t = lp.parse(sentence);
             trees.add(t);
 //            t.pennPrint();
-            count ++;
-            if (count % 1000 == 0)
-            {
-//                System.out.println("Parse count: " + count);
-            }
+//            count ++;
+//            if (count % 1000 == 0)
+//            {
+////                System.out.println("Parse count: " + count);
+//            }
         }
         return trees;
     }
